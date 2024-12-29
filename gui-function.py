@@ -12,10 +12,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 def open_image():
     global img, img_display, img_path, original_size
     file_path = filedialog.askopenfilename(
-            initialdir="data/",
-            title="Select an Image File",
-            filetypes=[("All Files", "*.*")]  # Show all files for testing
-        )
+        initialdir="data/",
+        title="Select an Image File",
+        filetypes=[("All Files", "*.*")]
+    )
 
     if file_path:
         try:
@@ -24,7 +24,6 @@ def open_image():
             img_display = ImageTk.PhotoImage(img.resize((250, 250)))
             label_original_img.config(image=img_display)
             label_original_img.image = img_display  # Prevent garbage collection
-            # Display image size
             original_size = os.path.getsize(file_path) / 1024  # Size in KB
             entry_size_original.delete(0, END)
             entry_size_original.insert(0, f"{original_size:.4f} kb")
@@ -47,20 +46,15 @@ def compress_image():
         # Compress the image and save it
         cv2.imwrite(compressed_path, img_cv, [int(cv2.IMWRITE_JPEG_QUALITY), 50])  # Compression quality 50%
         
-        # Get the compressed image size
         compressed_size = os.path.getsize(compressed_path) / 1024  # Size in KB
-        
-        # Display the compressed image in the UI
         compressed_img = Image.open(compressed_path).resize((250, 250))
         img_display_compressed = ImageTk.PhotoImage(compressed_img)
         label_compressed_img.config(image=img_display_compressed)
         label_compressed_img.image = img_display_compressed
 
-        # Update the size of the compressed image in the UI
         entry_size_compressed.delete(0, END)
         entry_size_compressed.insert(0, f"{compressed_size:.4f} kb")
-        
-        # Calculate metrics
+
         calculate_metrics(img_path, compressed_path)
         plot_histogram()
     except Exception as e:
@@ -72,16 +66,11 @@ def calculate_metrics(original, compressed):
     original_img = cv2.imread(original, cv2.IMREAD_GRAYSCALE)
     compressed_img = cv2.imread(compressed, cv2.IMREAD_GRAYSCALE)
 
-    # MSE
     mse_value = np.mean((original_img - compressed_img) ** 2)
-    # PSNR
     psnr_value = cv2.PSNR(original_img, compressed_img)
-    # SSIM
     ssim_value, _ = ssim(original_img, compressed_img, full=True)
-    # Entropy
     entropy_value = -np.sum(original_img / 255 * np.log2(original_img / 255 + 1e-10))
 
-    # Update metrics
     entry_psnr.delete(0, END)
     entry_psnr.insert(0, f"{psnr_value:.4f}")
 
@@ -129,57 +118,55 @@ root.geometry("1200x800")
 root.resizable(False, False)
 
 # Frames for layout
-frame_left = Frame(root, padx=10, pady=10)
+frame_left = Frame(root, padx=10, pady=10, bg="#f0f0f0", relief=GROOVE, bd=2)
 frame_left.pack(side=LEFT, fill=Y)
 
-frame_center = Frame(root, padx=10, pady=10)
-frame_center.pack(side=LEFT)
+frame_center = Frame(root, padx=10, pady=10, bg="#f9f9f9", relief=GROOVE, bd=2)
+frame_center.pack(side=LEFT, fill=BOTH, expand=True)
 
-frame_right = Frame(root, padx=10, pady=10)
-frame_right.pack(side=RIGHT)
+frame_right = Frame(root, padx=10, pady=10, bg="#f0f0f0", relief=GROOVE, bd=2)
+frame_right.pack(side=RIGHT, fill=Y)
+
+histogram_frame = Frame(root, padx=10, pady=10, bg="#ffffff", relief=GROOVE, bd=2)
+histogram_frame.pack(side=BOTTOM, fill=BOTH, expand=True)
 
 # Buttons - Left Frame
-Label(frame_left, text="Pengolahan", font=("Arial", 12, "bold")).pack(pady=5)
+Label(frame_left, text="Pengolahan", font=("Arial", 12, "bold"), bg="#f0f0f0").pack(pady=10)
 Button(frame_left, text="Buka Citra", width=15, command=open_image).pack(pady=5)
 Button(frame_left, text="Kompresi", width=15, command=compress_image).pack(pady=5)
 Button(frame_left, text="Reset", width=15, command=reset_fields).pack(pady=5)
 
 # Original Image - Center Frame
-Label(frame_center, text="Citra Asli", font=("Arial", 10, "bold")).pack()
+Label(frame_center, text="Citra Asli", font=("Arial", 10, "bold"), bg="#f9f9f9").pack(pady=10)
 label_original_img = Label(frame_center, width=250, height=250, bg="gray")
 label_original_img.pack(pady=5)
-Label(frame_center, text="Ukuran Citra Asli").pack()
+Label(frame_center, text="Ukuran Citra Asli", bg="#f9f9f9").pack()
 entry_size_original = Entry(frame_center, width=30)
-entry_size_original.pack()
+entry_size_original.pack(pady=5)
 
 # Compressed Image - Right Frame
-Label(frame_right, text="Citra Hasil Kompresi", font=("Arial", 10, "bold")).pack()
+Label(frame_right, text="Citra Hasil Kompresi", font=("Arial", 10, "bold"), bg="#f0f0f0").pack(pady=10)
 label_compressed_img = Label(frame_right, width=250, height=250, bg="white")
 label_compressed_img.pack(pady=5)
-Label(frame_right, text="Ukuran Citra Hasil Kompresi").pack()
+Label(frame_right, text="Ukuran Citra Hasil Kompresi", bg="#f0f0f0").pack()
 entry_size_compressed = Entry(frame_right, width=30)
-entry_size_compressed.pack()
+entry_size_compressed.pack(pady=5)
 
-# Metrics Entries
-Label(frame_right, text="PSNR").pack()
+Label(frame_right, text="PSNR", bg="#f0f0f0").pack()
 entry_psnr = Entry(frame_right, width=30)
-entry_psnr.pack()
+entry_psnr.pack(pady=5)
 
-Label(frame_right, text="MSE").pack()
+Label(frame_right, text="MSE", bg="#f0f0f0").pack()
 entry_mse = Entry(frame_right, width=30)
-entry_mse.pack()
+entry_mse.pack(pady=5)
 
-Label(frame_right, text="SSIM").pack()
+Label(frame_right, text="SSIM", bg="#f0f0f0").pack()
 entry_ssim = Entry(frame_right, width=30)
-entry_ssim.pack()
+entry_ssim.pack(pady=5)
 
-Label(frame_right, text="Entropy").pack()
+Label(frame_right, text="Entropy", bg="#f0f0f0").pack()
 entry_entropy = Entry(frame_right, width=30)
-entry_entropy.pack()
-
-# Histogram Frame
-histogram_frame = Frame(root, padx=10, pady=10)
-histogram_frame.pack(side=BOTTOM, fill=X)
+entry_entropy.pack(pady=5)
 
 # Run the application
 root.mainloop()
