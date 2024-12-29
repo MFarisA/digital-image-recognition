@@ -5,7 +5,8 @@ import os
 import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
-from matplotlib import pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Functionality placeholders
 def open_image():
@@ -61,17 +62,10 @@ def compress_image():
         
         # Calculate metrics
         calculate_metrics(img_path, compressed_path)
+        plot_histogram()
     except Exception as e:
         print("Error compressing image:", e)
 
-# Add this new function for Hitung button
-# def hitung_metrics():
-#     if img_path:
-#         compress_image()
-#     else:
-#         print("Please open an image first.")
-
-# Function to calculate the metrics (PSNR, MSE, SSIM, Entropy)
 def calculate_metrics(original, compressed):
     global mse_value, psnr_value, ssim_value, entropy_value
     
@@ -109,14 +103,24 @@ def reset_fields():
     entry_mse.delete(0, END)
     entry_ssim.delete(0, END)
     entry_entropy.delete(0, END)
+    for widget in histogram_frame.winfo_children():
+        widget.destroy()
 
 def plot_histogram():
+    for widget in histogram_frame.winfo_children():
+        widget.destroy()
+
     img_cv = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-    plt.hist(img_cv.ravel(), 256, [0, 256])
-    plt.title('Histogram')
-    plt.xlabel('Pixel Values')
-    plt.ylabel('Frequency')
-    plt.show()
+    fig = Figure(figsize=(5, 4), dpi=100)
+    ax = fig.add_subplot(111)
+    ax.hist(img_cv.ravel(), 256, [0, 256])
+    ax.set_title('Histogram')
+    ax.set_xlabel('Pixel Values')
+    ax.set_ylabel('Frequency')
+
+    canvas = FigureCanvasTkAgg(fig, master=histogram_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack()
 
 # Root window setup
 root = Tk()
@@ -124,7 +128,7 @@ root.title("Image Compression Tool")
 root.geometry("1200x800")
 root.resizable(False, False)
 
-# Frames for layout (these need to be defined before they are used)
+# Frames for layout
 frame_left = Frame(root, padx=10, pady=10)
 frame_left.pack(side=LEFT, fill=Y)
 
@@ -138,8 +142,6 @@ frame_right.pack(side=RIGHT)
 Label(frame_left, text="Pengolahan", font=("Arial", 12, "bold")).pack(pady=5)
 Button(frame_left, text="Buka Citra", width=15, command=open_image).pack(pady=5)
 Button(frame_left, text="Kompresi", width=15, command=compress_image).pack(pady=5)
-Button(frame_left, text="Histogram", width=15, command=plot_histogram).pack(pady=5)
-# Button(frame_left, text="Hitung", width=15, command=hitung_metrics).pack(pady=5)  # Added Hitung button
 Button(frame_left, text="Reset", width=15, command=reset_fields).pack(pady=5)
 
 # Original Image - Center Frame
@@ -174,6 +176,10 @@ entry_ssim.pack()
 Label(frame_right, text="Entropy").pack()
 entry_entropy = Entry(frame_right, width=30)
 entry_entropy.pack()
+
+# Histogram Frame
+histogram_frame = Frame(root, padx=10, pady=10)
+histogram_frame.pack(side=BOTTOM, fill=X)
 
 # Run the application
 root.mainloop()
